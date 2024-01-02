@@ -38,11 +38,9 @@ app.post('/compare', upload.array('pdfFiles', 2), async (req: Request, res: Resp
 
         // console.log('diff', diff)
         diff.forEach((part: Change) => {
-            // Split the part into lines for detailed output
             const lines = part.value.split('\n');
             lines.forEach((line, idx) => {
-              // Avoid adding empty lines after split
-              if (line || idx < lines.length - 1) {
+              if (line || idx < lines.length - 1) { //Check for all non-empty lines
                 if (part.added) {
                   differences.push({ status: 'Added', value: line, line: lineCounter2++, file: 2 });
                 } else if (part.removed) {
