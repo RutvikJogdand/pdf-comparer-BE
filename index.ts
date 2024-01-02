@@ -12,6 +12,8 @@ app.use( cors() )
 interface Difference {
     status: string;
     value: string;
+    line: number;
+    file: number;
 }
 
 async function readPDF(filePath: string): Promise<string> {
@@ -31,14 +33,27 @@ app.post('/compare', upload.array('pdfFiles', 2), async (req: Request, res: Resp
 
         const diff = diffLines(text1, text2);
         let differences: Difference[] = [];
+        let lineCounter1 = 0;
+        let lineCounter2 = 0;      
 
         // console.log('diff', diff)
         diff.forEach((part: Change) => {
-            if (part.added || part.removed) {
-                const status = part.added ? 'Added' : 'Removed';
-                differences.push({ status, value: part.value });
-            }
-        });
+            // Split the part into lines for detailed output
+            const lines = part.value.split('\n');
+            lines.forEach((line, idx) => {
+              // Avoid adding empty lines after split
+              if (line || idx < lines.length - 1) {
+                if (part.added) {
+                  differences.push({ status: 'Added', value: line, line: lineCounter2++, file: 2 });
+                } else if (part.removed) {
+                  differences.push({ status: 'Removed', value: line, line: lineCounter1++, file: 1 });
+                } else {
+                  lineCounter1++;
+                  lineCounter2++;
+                }
+              }
+            });
+          });
 
         res.json({ different: differences.length > 0, differences });
     } else {
